@@ -1,0 +1,30 @@
+#!/bin/sh
+
+set -o errexit
+set -o nounset
+
+# This command will compile all of the .po files in your project into binary .mo files.
+python manage.py compilemessages
+
+# --max-requests: Specifies the maximum number of requests a worker process should handle 
+# before it is restarted.
+
+# --max-requests-jitter : a random amount of jitter to the --max-requests option. Jitter 
+# is added to the value of --max-requests to help prevent all worker processes from being 
+# restarted at the same time.
+
+# --workers: specifies the number of worker processes that should be started to handle 
+# incoming requests. 
+
+# --timeout: specifies the number of seconds that a worker process should be allowed to 
+# handle a request before it is terminated.
+
+# --reload: specifies that the worker processes should be automatically restarted whenever 
+# the Python code or configuration files are modified. 
+
+# --bind: specifies the network address and port that the worker processes should listen 
+# on for incoming requests. The socket can be configured to accept connections from a specific 
+# IP address or from any IP address (0.0.0.0).
+
+exec gunicorn base.wsgi --bind 0.0.0.0:8000 --max-requests=10000 --max-requests-jitter=400 --workers=1 --timeout=1200 --reload
+
