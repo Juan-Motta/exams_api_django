@@ -17,9 +17,6 @@ To install the application the following tools are required
 * PostgreSQL 14
 * Redis
 
-:::warning
-Hola
-:::
 All the steps were designed for Linux/MacOS
 
 ### Installation without docker
