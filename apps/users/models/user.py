@@ -121,8 +121,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(
         max_length=16, null=True, blank=True, validators=[validate_phone]
     )
-    nid = models.CharField(max_length=16, null=True, blank=True, validators=[validate_nid])
-    birth = models.DateField(null=True, blank=True, validators=[validate_birth])
+    nid = models.CharField(
+        max_length=16, null=True, blank=True, validators=[validate_nid]
+    )
+    birth = models.DateField(
+        null=True, blank=True, validators=[validate_birth]
+    )
     password = models.CharField(max_length=128)
 
     state = models.ForeignKey(
