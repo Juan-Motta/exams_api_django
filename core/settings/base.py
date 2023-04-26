@@ -47,9 +47,10 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "corsheaders",
+    'drf_spectacular',
 ]
 
-LOCAL_APPS = ["apps.users", "apps.base"]
+LOCAL_APPS = ["apps.users"]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -216,6 +217,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "core.pagination.CustomPagination",
     "EXCEPTION_HANDLER": "core.exception.custom_exception_handler",
     "PAGE_SIZE": 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # CACHE DEFINITION ================================================================================
@@ -257,3 +259,13 @@ CELERY_RESULT_EXPIRES = os.getenv("CELERY_RESULT_EXPIRES")
 
 # specifies the expiration time of the token.
 JWT_EXP = os.getenv("JWT_EXP")
+
+# DFR SPECTACULAR DEFINITION ======================================================================
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Exams API',
+    'DESCRIPTION': 'Your project description',
+    'VERSION': '0.1.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
+}

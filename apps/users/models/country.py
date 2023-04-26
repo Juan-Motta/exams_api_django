@@ -1,4 +1,4 @@
-from apps.base.validators.country import validate_name
+from apps.users.validators import validate_name
 
 from django.db import models
 

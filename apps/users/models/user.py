@@ -1,11 +1,113 @@
-from apps.base.models.country import Country
-from apps.users.managers.user import UserManager
+from typing import Any, Optional
+
+from apps.users.models.country import Country
 from apps.users.models.user_profile import UserProfile
 from apps.users.models.user_state import UserState
-from apps.users.validators.user import *
+from apps.users.validators import *
 
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.db import models
+
+
+class UserManager(BaseUserManager):
+    def _create_user(
+        self,
+        email: str,
+        first_name: str,
+        last_name: str,
+        phone: str,
+        nid: str,
+        birth: str,
+        password: str,
+        state: int,
+        profile: int,
+        country: int,
+        is_staff: bool,
+        is_superuser: bool,
+        **extra_fields,
+    ) -> Any:
+        user = self.model(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            phone=phone,
+            nid=nid,
+            birth=birth,
+            state_id=state,
+            country_id=country,
+            is_staff=is_staff,
+            is_superuser=is_superuser,
+            **extra_fields,
+        )
+        user.set_password(password)
+        user.save(using=self.db)
+        user.profile.add(profile)
+        user.save(using=self.db)
+        return user
+
+    def create_user(
+        self,
+        email: str,
+        first_name: str,
+        last_name: str,
+        phone: str,
+        nid: str,
+        birth: str,
+        state: int,
+        profile: int,
+        country: int,
+        password: Optional[str] = None,
+        **extra_fields,
+    ) -> Any:
+        return self._create_user(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            phone=phone,
+            nid=nid,
+            birth=birth,
+            password=password,
+            state=state,
+            profile=profile,
+            country=country,
+            is_staff=False,
+            is_superuser=False,
+            **extra_fields,
+        )
+
+    def create_superuser(
+        self,
+        email: str,
+        first_name: str,
+        last_name: str,
+        phone: str,
+        nid: str,
+        birth: str,
+        state: int,
+        profile: int,
+        country: int,
+        password: Optional[str] = None,
+        **extra_fields,
+    ) -> Any:
+        return self._create_user(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            phone=phone,
+            nid=nid,
+            birth=birth,
+            password=password,
+            state=state,
+            profile=profile,
+            country=country,
+            is_staff=True,
+            is_superuser=True,
+            **extra_fields,
+        )
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -17,10 +119,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=128, validators=[validate_last_name]
     )
     phone = models.CharField(
-        max_length=16, null=True, validators=[validate_phone]
+        max_length=16, null=True, blank=True, validators=[validate_phone]
     )
-    nid = models.CharField(max_length=16, null=True, validators=[validate_nid])
-    birth = models.DateField(null=True, validators=[validate_birth])
+    nid = models.CharField(max_length=16, null=True, blank=True, validators=[validate_nid])
+    birth = models.DateField(null=True, blank=True, validators=[validate_birth])
     password = models.CharField(max_length=128)
 
     state = models.ForeignKey(
@@ -50,6 +152,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         "birth",
         "state",
         "profile",
+        "country",
     ]
 
     def clean_email(self) -> str:
@@ -62,10 +165,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.last_name = self.last_name.lower().strip()
 
     def clean_phone(self) -> str:
-        self.phone = self.phone.lower().strip()
+        if self.phone is not None:
+            self.phone = self.phone.lower().strip()
 
     def clean_nid(self) -> str:
-        self.nid = self.nid.lower().strip()
+        if self.nid is not None:
+            self.nid = self.nid.lower().strip()
 
     def clean(self) -> None:
         self.clean_email()
@@ -73,6 +178,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.clean_last_name()
         self.clean_phone()
         self.clean_nid()
+        self.clean_state()
 
     def save(self, *args, **kwargs) -> None:
         self.full_clean()
