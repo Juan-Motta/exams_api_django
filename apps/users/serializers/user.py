@@ -1,5 +1,6 @@
 from typing import Dict
 
+from apps.users.constants import ProfileConstants, StateConstants
 from apps.users.models.user import CountryChoises, ProfileChoises, StateChoises, User
 
 from django.db import transaction
@@ -33,7 +34,6 @@ class UserOutputSerializer(serializers.ModelSerializer):
             "phone",
             "nid",
             "birth",
-            "password",
             "state",
             "country",
             "profile",
@@ -49,34 +49,41 @@ class UserSerializer(serializers.Serializer):
     birth = serializers.CharField(allow_null=True)
     password = serializers.CharField()
     state = serializers.ChoiceField(
-        choices=StateChoises.choices, allow_null=True
+        choices=StateChoises.choices, required=False
     )
     country = serializers.ChoiceField(
         choices=CountryChoises.choices, allow_null=True
     )
     profiles = serializers.ChoiceField(
-        choices=ProfileChoises.choices, allow_null=True
+        choices=ProfileChoises.choices, required=False
     )
+    password = serializers.CharField(required=False)
+    is_active = serializers.BooleanField(required=False)
 
     @transaction.atomic
-    def create(self, validated_data: Dict) -> User:
+    def create(self, data: Dict) -> User:
         user = User.objects.create_user(
-            email=validated_data.get("email"),
-            first_name=validated_data.get("first_name"),
-            last_name=validated_data.get("last_email"),
-            phone=validated_data.get("phone"),
-            nid=validated_data.get("nid"),
-            birth=validated_data.get("birth"),
-            password=validated_data.get("password"),
-            state=validated_data.get("state"),
-            country=validated_data.get("country"),
-            profile=validated_data.get("profile"),
+            email=data.get("email"),
+            first_name=data.get("first_name"),
+            last_name=data.get("last_name"),
+            phone=data.get("phone"),
+            nid=data.get("nid"),
+            birth=data.get("birth"),
+            password=data.get("password"),
+            country=data.get("country"),
         )
-        user.save()
         return user
 
-    def update(self, instance: User, validated_data: Dict) -> User:
-        return
+    def update(self, instance: User, data: Dict) -> User:
+        for key, value in data.items():
+            setattr(instance, key, value)
+        self._set_password(instance=instance, data=data)
+
+    def _set_password(self, instance: User, data: Dict) -> str:
+        if "password" in data:
+            instance.set_password(data["password"])
+        else:
+            return
 
     def to_representation(self, instance):
         return UserOutputSerializer(instance).data
