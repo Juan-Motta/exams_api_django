@@ -13,7 +13,8 @@ class UserCreateAndRetrieveApiView(GenericAPIView):
         pass
 
     def post(self, request: Request) -> Response:
-        return Response(create_user(request.data), 200)
+        response = create_user(request.data)
+        return Response(response, 200)
 
 
 class UserUpdateAndRetrieveApiView(GenericAPIView):

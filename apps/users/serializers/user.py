@@ -1,6 +1,6 @@
 from typing import Dict
 
-from apps.users.models.user import User
+from apps.users.models.user import User, StateChoises, ProfileChoises, CountryChoises
 
 from django.db import transaction
 from rest_framework import serializers
@@ -8,8 +8,6 @@ from rest_framework.exceptions import ValidationError
 
 
 class UserInputSerializer(serializers.ModelSerializer):
-    country = serializers.IntegerField()
-
     class Meta:
         model = User
         fields = (
@@ -25,15 +23,10 @@ class UserInputSerializer(serializers.ModelSerializer):
 
 
 class UserOutputSerializer(serializers.ModelSerializer):
-    state = serializers.IntegerField()
-    country = serializers.IntegerField()
-    profiles = serializers.ListField(
-        child=serializers.IntegerField(min_value=1)
-    )
-
     class Meta:
         model = User
         fields = (
+            "id",
             "email",
             "first_name",
             "last_name",
@@ -43,7 +36,7 @@ class UserOutputSerializer(serializers.ModelSerializer):
             "password",
             "state",
             "country",
-            "profiles",
+            "profile",
         )
 
 
@@ -51,31 +44,28 @@ class UserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     first_name = serializers.CharField()
     last_name = serializers.CharField()
-    phone = serializers.CharField()
-    nid = serializers.CharField()
-    birth = serializers.CharField()
+    phone = serializers.CharField(allow_null=True)
+    nid = serializers.CharField(allow_null=True)
+    birth = serializers.CharField(allow_null=True)
     password = serializers.CharField()
-    state = serializers.IntegerField()
-    country = serializers.IntegerField()
-    profiles = serializers.ListField(
-        child=serializers.IntegerField(min_value=1)
-    )
+    state = serializers.ChoiceField(choices=StateChoises.choices, allow_null=True)
+    country = serializers.ChoiceField(choices=CountryChoises.choices, allow_null=True)
+    profiles = serializers.ChoiceField(choices=ProfileChoises.choices, allow_null=True)
 
     @transaction.atomic
     def create(self, validated_data: Dict) -> User:
         user = User.objects.create_user(
-            email=validated_data["email"],
-            first_name=validated_data["first_name"],
-            last_name=validated_data["last_email"],
-            phone=validated_data["phone"],
-            nid=validated_data["nid"],
-            birth=validated_data["birth"],
-            password=validated_data["password"],
-            state_id=validated_data["state"],
-            country_id=validated_data["country"],
+            email=validated_data.get("email"),
+            first_name=validated_data.get("first_name"),
+            last_name=validated_data.get("last_email"),
+            phone=validated_data.get("phone"),
+            nid=validated_data.get("nid"),
+            birth=validated_data.get("birth"),
+            password=validated_data.get("password"),
+            state=validated_data.get("state"),
+            country=validated_data.get("country"),
+            profile=validated_data.get("profile")
         )
-        for profile in validated_data["profiles"]:
-            user.profiles.add(profile)
         user.save()
         return user
 

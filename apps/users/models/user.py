@@ -1,8 +1,5 @@
 from typing import Any, Optional
 
-from apps.users.models.country import Country
-from apps.users.models.user_profile import UserProfile
-from apps.users.models.user_state import UserState
 from apps.users.validators import *
 
 from django.contrib.auth.models import (
@@ -11,7 +8,29 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+from apps.users.constants import ProfileConstants, StateConstants, CountryConstants
 
+
+class StateChoises(models.TextChoices):
+    ACTIVE = StateConstants.ACTIVE, _(StateConstants.ACTIVE)
+    INACTIVE = StateConstants.INACTIVE, _(StateConstants.INACTIVE)
+    PENDING = StateConstants.PENDING, _(StateConstants.PENDING)
+
+class ProfileChoises(models.TextChoices):
+    ADMINISTRATOR = ProfileConstants.ADMINISTRATOR, _(ProfileConstants.ADMINISTRATOR)
+    COORDINATOR = ProfileConstants.COORDINATOR, _(ProfileConstants.COORDINATOR)
+    STUDENT = ProfileConstants.STUDENT, _(ProfileConstants.STUDENT)
+    SUPPORT = ProfileConstants.SUPPORT, _(ProfileConstants.SUPPORT)
+    TEACHER = ProfileConstants.TEACHER, _(ProfileConstants.TEACHER)
+    USER = ProfileConstants.USER, _(ProfileConstants.USER)
+
+class CountryChoises(models.TextChoices):
+    COL = CountryConstants.COL, _(CountryConstants.COL)
+    ECU = CountryConstants.ECU, _(CountryConstants.ECU)
+    ESP = CountryConstants.ESP, _(CountryConstants.ESP)
+    MEX = CountryConstants.MEX, _(CountryConstants.MEX)
+    PER = CountryConstants.PER, _(CountryConstants.PER)
 
 class UserManager(BaseUserManager):
     def _create_user(
@@ -23,9 +42,9 @@ class UserManager(BaseUserManager):
         nid: str,
         birth: str,
         password: str,
-        state: int,
-        profile: int,
-        country: int,
+        country: str,
+        state: str,
+        profile: str,
         is_staff: bool,
         is_superuser: bool,
         **extra_fields,
@@ -37,15 +56,14 @@ class UserManager(BaseUserManager):
             phone=phone,
             nid=nid,
             birth=birth,
-            state_id=state,
-            country_id=country,
+            country=country,
+            state=state,
+            profile=profile,
             is_staff=is_staff,
             is_superuser=is_superuser,
             **extra_fields,
         )
         user.set_password(password)
-        user.save(using=self.db)
-        user.profile.add(profile)
         user.save(using=self.db)
         return user
 
@@ -57,8 +75,6 @@ class UserManager(BaseUserManager):
         phone: str,
         nid: str,
         birth: str,
-        state: int,
-        profile: int,
         country: int,
         password: Optional[str] = None,
         **extra_fields,
@@ -71,8 +87,8 @@ class UserManager(BaseUserManager):
             nid=nid,
             birth=birth,
             password=password,
-            state=state,
-            profile=profile,
+            state=StateConstants.PENDING,
+            profile=ProfileConstants.USER,
             country=country,
             is_staff=False,
             is_superuser=False,
@@ -87,12 +103,11 @@ class UserManager(BaseUserManager):
         phone: str,
         nid: str,
         birth: str,
-        state: int,
-        profile: int,
-        country: int,
+        country: str,
         password: Optional[str] = None,
         **extra_fields,
     ) -> Any:
+        print(StateConstants.ACTIVE)
         return self._create_user(
             email=email,
             first_name=first_name,
@@ -101,8 +116,8 @@ class UserManager(BaseUserManager):
             nid=nid,
             birth=birth,
             password=password,
-            state=state,
-            profile=profile,
+            state=StateConstants.ACTIVE,
+            profile=ProfileConstants.ADMINISTRATOR,
             country=country,
             is_staff=True,
             is_superuser=True,
@@ -111,6 +126,8 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    
+    
     email = models.EmailField(max_length=128, unique=True)
     first_name = models.CharField(
         max_length=128, validators=[validate_first_name]
@@ -129,15 +146,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     password = models.CharField(max_length=128)
 
-    state = models.ForeignKey(
-        UserState, on_delete=models.CASCADE, related_name="users"
+    state = models.CharField(
+        max_length=16,
+        choices=StateChoises.choices,
+        default=StateChoises.PENDING
     )
-    country = models.ForeignKey(
-        Country, on_delete=models.CASCADE, related_name="users"
+    profile = models.CharField(
+        max_length=16,
+        choices=ProfileChoises.choices,
+        default=ProfileChoises.USER
     )
-    profile = models.ManyToManyField(UserProfile, related_name="users")
+    country = models.CharField(
+        max_length=32,
+        choices=CountryChoises.choices,
+    )
 
-    active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -154,8 +178,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         "phone",
         "nid",
         "birth",
-        "state",
-        "profile",
         "country",
     ]
 
@@ -182,11 +204,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.clean_last_name()
         self.clean_phone()
         self.clean_nid()
-        self.clean_state()
 
     def save(self, *args, **kwargs) -> None:
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"<User id={self.id} email={self.email} active={self.active}>"
+        return f"<User id={self.id} email={self.email} is_active={self.active}>"
