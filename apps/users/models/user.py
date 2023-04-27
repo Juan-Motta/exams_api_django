@@ -1,5 +1,6 @@
 from typing import Any, Optional
 
+from apps.users.constants import CountryConstants, ProfileConstants, StateConstants
 from apps.users.validators import *
 
 from django.contrib.auth.models import (
@@ -9,7 +10,6 @@ from django.contrib.auth.models import (
 )
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from apps.users.constants import ProfileConstants, StateConstants, CountryConstants
 
 
 class StateChoises(models.TextChoices):
@@ -17,13 +17,17 @@ class StateChoises(models.TextChoices):
     INACTIVE = StateConstants.INACTIVE, _(StateConstants.INACTIVE)
     PENDING = StateConstants.PENDING, _(StateConstants.PENDING)
 
+
 class ProfileChoises(models.TextChoices):
-    ADMINISTRATOR = ProfileConstants.ADMINISTRATOR, _(ProfileConstants.ADMINISTRATOR)
+    ADMINISTRATOR = ProfileConstants.ADMINISTRATOR, _(
+        ProfileConstants.ADMINISTRATOR
+    )
     COORDINATOR = ProfileConstants.COORDINATOR, _(ProfileConstants.COORDINATOR)
     STUDENT = ProfileConstants.STUDENT, _(ProfileConstants.STUDENT)
     SUPPORT = ProfileConstants.SUPPORT, _(ProfileConstants.SUPPORT)
     TEACHER = ProfileConstants.TEACHER, _(ProfileConstants.TEACHER)
     USER = ProfileConstants.USER, _(ProfileConstants.USER)
+
 
 class CountryChoises(models.TextChoices):
     COL = CountryConstants.COL, _(CountryConstants.COL)
@@ -31,6 +35,7 @@ class CountryChoises(models.TextChoices):
     ESP = CountryConstants.ESP, _(CountryConstants.ESP)
     MEX = CountryConstants.MEX, _(CountryConstants.MEX)
     PER = CountryConstants.PER, _(CountryConstants.PER)
+
 
 class UserManager(BaseUserManager):
     def _create_user(
@@ -126,8 +131,6 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    
-    
     email = models.EmailField(max_length=128, unique=True)
     first_name = models.CharField(
         max_length=128, validators=[validate_first_name]
@@ -149,12 +152,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     state = models.CharField(
         max_length=16,
         choices=StateChoises.choices,
-        default=StateChoises.PENDING
+        default=StateChoises.PENDING,
     )
     profile = models.CharField(
         max_length=16,
         choices=ProfileChoises.choices,
-        default=ProfileChoises.USER
+        default=ProfileChoises.USER,
     )
     country = models.CharField(
         max_length=32,
@@ -210,4 +213,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"<User id={self.id} email={self.email} is_active={self.active}>"
+        return (
+            f"<User id={self.id} email={self.email} is_active={self.active}>"
+        )

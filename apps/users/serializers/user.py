@@ -1,6 +1,6 @@
 from typing import Dict
 
-from apps.users.models.user import User, StateChoises, ProfileChoises, CountryChoises
+from apps.users.models.user import CountryChoises, ProfileChoises, StateChoises, User
 
 from django.db import transaction
 from rest_framework import serializers
@@ -48,9 +48,15 @@ class UserSerializer(serializers.Serializer):
     nid = serializers.CharField(allow_null=True)
     birth = serializers.CharField(allow_null=True)
     password = serializers.CharField()
-    state = serializers.ChoiceField(choices=StateChoises.choices, allow_null=True)
-    country = serializers.ChoiceField(choices=CountryChoises.choices, allow_null=True)
-    profiles = serializers.ChoiceField(choices=ProfileChoises.choices, allow_null=True)
+    state = serializers.ChoiceField(
+        choices=StateChoises.choices, allow_null=True
+    )
+    country = serializers.ChoiceField(
+        choices=CountryChoises.choices, allow_null=True
+    )
+    profiles = serializers.ChoiceField(
+        choices=ProfileChoises.choices, allow_null=True
+    )
 
     @transaction.atomic
     def create(self, validated_data: Dict) -> User:
@@ -64,7 +70,7 @@ class UserSerializer(serializers.Serializer):
             password=validated_data.get("password"),
             state=validated_data.get("state"),
             country=validated_data.get("country"),
-            profile=validated_data.get("profile")
+            profile=validated_data.get("profile"),
         )
         user.save()
         return user

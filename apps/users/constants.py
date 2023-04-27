@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class ProfileConstants:
     ADMINISTRATOR = "administrator"
@@ -9,11 +10,13 @@ class ProfileConstants:
     TEACHER = "teacher"
     USER = "user"
 
+
 @dataclass
 class StateConstants:
     ACTIVE = "active"
     INACTIVE = "inactive"
     PENDING = "pending"
+
 
 @dataclass
 class CountryConstants:
